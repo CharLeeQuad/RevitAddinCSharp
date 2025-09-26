@@ -1,0 +1,18 @@
+# Build outputs
+bin/
+obj/
+
+# Visual Studio workspace
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# NuGet packages
+packages/
+*.nupkg
+
+# Revit temporary files
+*.rvt~
+*.rfa~
