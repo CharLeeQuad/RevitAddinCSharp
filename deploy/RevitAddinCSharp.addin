@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RevitAddIns>
+  <AddIn Type="Application">
+    <Name>RevitAddinCSharp</Name>
+    <FullClassName>RevitAddinCSharp.App</FullClassName>
+    <Assembly>RevitAddinCSharp.dll</Assembly>
+    <AddInId>F3F69FE6-2B3D-44BB-AE62-0D5BC6A7A7DE</AddInId>
+    <VendorId>CQAD</VendorId>
+    <VendorDescription>Christoph Quatmann</VendorDescription>
+    <Description>Initialisiert das DES Tools Ribbon.</Description>
+  </AddIn>
   <AddIn Type="Command">
     <Name>RevitAddinCSharp</Name>
     <FullClassName>RevitAddinCSharp.Commands.HelloWorldCommand</FullClassName>

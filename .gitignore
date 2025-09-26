@@ -16,3 +16,9 @@ packages/
 # Revit temporary files
 *.rvt~
 *.rfa~
+
+# Cascade memory artefacts
+.cascade_memory
+
+# Local build logs
+build.log
