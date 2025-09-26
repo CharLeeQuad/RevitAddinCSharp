@@ -1,0 +1,62 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <RevitApiVersion Condition="'$(RevitApiVersion)' == ''">2024</RevitApiVersion>
+    <RevitApiRoot Condition="'$(RevitApiRoot)' == ''">$(ProgramFiles)\Autodesk\Revit $(RevitApiVersion)</RevitApiRoot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="RevitAPI">
+      <HintPath>$(RevitApiRoot)\RevitAPI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="RevitAPIUI">
+      <HintPath>$(RevitApiRoot)\RevitAPIUI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\deploy\RevitAddinCSharp.addin">
+      <Link>RevitAddinCSharp.addin</Link>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <RevitAddinDir Include="2022">
+      <Path>$(AppData)\Autodesk\Revit\Addins\2022</Path>
+    </RevitAddinDir>
+    <RevitAddinDir Include="2024">
+      <Path>$(AppData)\Autodesk\Revit\Addins\2024</Path>
+    </RevitAddinDir>
+    <RevitAddinDir Include="2026">
+      <Path>$(AppData)\Autodesk\Revit\Addins\2026</Path>
+    </RevitAddinDir>
+  </ItemGroup>
+
+  <Target Name="ValidateRevitApiPath" BeforeTargets="ResolveReferences">
+    <Error Condition="!Exists('$(RevitApiRoot)\RevitAPI.dll')" Text="RevitAPI.dll wurde unter '$(RevitApiRoot)' nicht gefunden. Setze die MSBuild-Property 'RevitApiRoot' (z. B. via Directory.Build.props)." />
+  </Target>
+
+  <Target Name="DeployAddin" AfterTargets="Build">
+    <ItemGroup>
+      <ExistingRevitAddinDir Include="@(RevitAddinDir)" Condition="Exists(%(RevitAddinDir.Path))" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(ExistingRevitAddinDir -> '$(TargetPath)')"
+          DestinationFiles="@(ExistingRevitAddinDir -> '%(Path)\\RevitAddinCSharp.dll')"
+          Condition="@(ExistingRevitAddinDir) != ''" />
+
+    <Copy SourceFiles="@(ExistingRevitAddinDir -> '..\\..\\deploy\\RevitAddinCSharp.addin')"
+          DestinationFiles="@(ExistingRevitAddinDir -> '%(Path)\\RevitAddinCSharp.addin')"
+          SkipUnchangedFiles="true"
+          Condition="@(ExistingRevitAddinDir) != '' and Exists('..\..\deploy\RevitAddinCSharp.addin')" />
+  </Target>
+
+</Project>

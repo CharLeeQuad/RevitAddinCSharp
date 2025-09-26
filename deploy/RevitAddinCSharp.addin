@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Command">
+    <Name>RevitAddinCSharp</Name>
+    <FullClassName>RevitAddinCSharp.Commands.HelloWorldCommand</FullClassName>
+    <Text>Revit Add-in Hello</Text>
+    <Description>Einfache Test-Kommandofunktion für Revit.</Description>
+    <Assembly>RevitAddinCSharp.dll</Assembly>
+    <AddInId>8D83E68F-B739-46F0-A0CE-0CCF9B2D99A8</AddInId>
+    <VendorId>CQAD</VendorId>
+    <VendorDescription>Christoph Quatmann</VendorDescription>
+  </AddIn>
+</RevitAddIns>
