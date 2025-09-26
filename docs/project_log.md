@@ -21,6 +21,9 @@
 7. Dialog `LevelCreationForm` erstellt und Command `CreateLevelsCommand` implementiert, der Ober-/Untergeschosse gemäß Eingaben erzeugt; Ribbon-Button `Geschosse` verknüpft.
 8. UI auf WPF umgestellt (`LevelCreationWindow`), Command angepasst, WinForms entfernt.
 9. Änderungen committet und nach GitHub gepusht (`Add initial Revit add-in scaffold`).
+10. Einstellungen für Geschosserstellung ergänzt (WPF-Dialog `LevelSettingsWindow`, Ribbon-Button `Einstellungen`, persistente `LevelCreationSettings`).
+11. Persistente Speicherung der Einstellungen via XML im `%APPDATA%\RevitAddinCSharp\LevelCreationSettings.xml` implementiert.
+12. Ebenentyp-Auswahl in den Einstellungen ergänzt (LevelType-Liste aus dem aktiven Dokument, Übernahme während der Erstellung).
 
 ## Wichtige Dateien
 - `src/RevitAddinCSharp/RevitAddinCSharp.csproj`
@@ -29,8 +32,8 @@
 - `docs/project_log.md` (dieses Logbuch)
 
 ## Nächste Schritte (Vorschlag)
-- Konkrete Funktion(en) zur Projektinitialisierung definieren (z. B. Ebenenerstellung).
+- Weitere Projektinitialisierungsfunktionen definieren (z. B. Ansichten).
 - Unit-/Integrationstestszenario bestimmen (Test-RVT vorbereiten).
-- Optional: Build-Konfiguration anpassen (Release, Mehrfach-Targeting falls Revit 2026 .NET 8 benötigt).
-- Dokumentation fortlaufend pflegen (diese Datei bei Änderungen aktualisieren).
-- Formular `LevelCreationForm` langfristig auf WPF/XAML umstellen (bessere Skalierung & Styling).
+- Optional: Build-Konfiguration anpassen (Release, Mehrfach-Targeting für weitere Versionen).
+- Einstellungen um projektbezogene Parameter-Mappings erweitern.
+- Ebenentyp-Auswahl validieren (z. B. Handling fehlender Typen, Mehrfachprojekte).

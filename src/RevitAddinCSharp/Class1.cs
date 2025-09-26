@@ -12,6 +12,8 @@ namespace RevitAddinCSharp
         private const string ButtonText = "Hallo Welt";
         private const string LevelsButtonName = "CreateLevelsButton";
         private const string LevelsButtonText = "Geschosse";
+        private const string SettingsButtonName = "LevelSettingsButton";
+        private const string SettingsButtonText = "Einstellungen";
 
         public Result OnStartup(UIControlledApplication application)
         {
@@ -26,6 +28,7 @@ namespace RevitAddinCSharp
                 RibbonPanel panel = EnsurePanel(application);
                 CreateHelloWorldButton(panel);
                 CreateLevelsButton(panel);
+                CreateSettingsButton(panel);
             }
             catch (Exception ex)
             {
@@ -88,6 +91,16 @@ namespace RevitAddinCSharp
             }
 
             AddButton(panel, LevelsButtonName, LevelsButtonText, typeof(Commands.CreateLevelsCommand), "Erstellt Ober- und Untergeschosse nach Vorgabe.");
+        }
+
+        private void CreateSettingsButton(RibbonPanel panel)
+        {
+            if (panel == null)
+            {
+                return;
+            }
+
+            AddButton(panel, SettingsButtonName, SettingsButtonText, typeof(Commands.OpenSettingsCommand), "Öffnet die Einstellungen für die Geschosserstellung.");
         }
 
         private void AddButton(RibbonPanel panel, string name, string text, Type commandType, string tooltip)
