@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using Autodesk.Revit.DB;
 using RevitAddinCSharp.Settings;
+using RevitAddinCSharp.Utils;
 
 namespace RevitAddinCSharp.UI
 {
@@ -21,6 +23,7 @@ namespace RevitAddinCSharp.UI
             _draft = LevelCreationSettings.Current.Clone();
             LoadLevelTypes();
             LoadValues(_draft);
+            UpdateCategoryView("Levels");
         }
 
         private void LoadValues(LevelCreationSettings settings)
@@ -31,6 +34,13 @@ namespace RevitAddinCSharp.UI
             DefaultAboveHeightInput.Text = settings.DefaultAboveHeightMm.ToString(CultureInfo.InvariantCulture);
             DefaultBelowCountInput.Text = settings.DefaultBelowCount.ToString(CultureInfo.InvariantCulture);
             DefaultBelowHeightInput.Text = settings.DefaultBelowHeightMm.ToString(CultureInfo.InvariantCulture);
+            RenameExistingCheckBox.IsChecked = settings.RenameExistingLevels;
+            LevelDigitsInput.Text = settings.LevelNumberDigits.ToString(CultureInfo.InvariantCulture);
+            LevelSuffixInput.Text = settings.LevelNameSuffix ?? string.Empty;
+            GroundTokenInput.Text = settings.GroundFloorToken ?? string.Empty;
+            UpperTokenInput.Text = settings.UpperFloorToken ?? string.Empty;
+            TopTokenInput.Text = settings.TopFloorToken ?? string.Empty;
+            BasementTokenInput.Text = settings.BasementFloorToken ?? string.Empty;
 
             if (_levelTypes.Count > 0)
             {
@@ -89,12 +99,25 @@ namespace RevitAddinCSharp.UI
                 return;
             }
 
+            if (!TryParseInt(LevelDigitsInput.Text, 1, 4, out int numberDigits))
+            {
+                ShowValidation("Bitte eine gültige Stellenanzahl für Ebenennummern (1-4) eingeben.");
+                return;
+            }
+
             _draft.AlwaysMarkAsBuildingStory = BuildingStoryCheckBox.IsChecked == true;
             _draft.DefaultComputationHeightMm = computationHeightMm;
             _draft.DefaultAboveCount = aboveCount;
             _draft.DefaultAboveHeightMm = aboveHeightMm;
             _draft.DefaultBelowCount = belowCount;
             _draft.DefaultBelowHeightMm = belowHeightMm;
+            _draft.RenameExistingLevels = RenameExistingCheckBox.IsChecked == true;
+            _draft.LevelNumberDigits = numberDigits;
+            _draft.LevelNameSuffix = (LevelSuffixInput.Text ?? string.Empty).Trim();
+            _draft.GroundFloorToken = (GroundTokenInput.Text ?? string.Empty).Trim();
+            _draft.UpperFloorToken = (UpperTokenInput.Text ?? string.Empty).Trim();
+            _draft.TopFloorToken = (TopTokenInput.Text ?? string.Empty).Trim();
+            _draft.BasementFloorToken = (BasementTokenInput.Text ?? string.Empty).Trim();
 
             if (LevelTypeCombo.SelectedItem is LevelTypeOption selectedType)
             {
@@ -125,6 +148,57 @@ namespace RevitAddinCSharp.UI
             LoadValues(_draft);
         }
 
+        private void OnCategorySelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (CategoryList?.SelectedItem is ListBoxItem selected && selected.Tag is string tag)
+            {
+                UpdateCategoryView(tag);
+            }
+        }
+
+        private void UpdateCategoryView(string categoryTag)
+        {
+            bool showLevels = string.Equals(categoryTag, "Levels", StringComparison.OrdinalIgnoreCase);
+            bool showMenu = string.Equals(categoryTag, "Menu", StringComparison.OrdinalIgnoreCase);
+            if (LevelsContent != null)
+            {
+                LevelsContent.Visibility = showLevels ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+            }
+
+            if (MenuContent != null)
+            {
+                MenuContent.Visibility = showMenu ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+            }
+
+            bool showPlaceholder = !showLevels && !showMenu;
+            if (PlaceholderContent != null)
+            {
+                PlaceholderContent.Visibility = showPlaceholder ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+            }
+
+            if (PlaceholderText != null && showPlaceholder)
+            {
+                string message;
+                switch (categoryTag)
+                {
+                    case "Views":
+                        message = "Einstellungen für Ansichten folgen in einem späteren Schritt.";
+                        break;
+                    case "Menu":
+                        message = "Menü-Konfiguration wird vorbereitet.";
+                        break;
+                    case "Future":
+                        message = "Weitere Funktionen sind in Planung.";
+                        break;
+                    default:
+                        message = "Auswahl wird vorbereitet.";
+                        break;
+                }
+
+                PlaceholderText.Text = message;
+            }
+        }
+
         private void LoadLevelTypes()
         {
             if (_document == null)
@@ -137,7 +211,8 @@ namespace RevitAddinCSharp.UI
 
             foreach (LevelType type in new FilteredElementCollector(_document).OfClass(typeof(LevelType)))
             {
-                _levelTypes.Add(new LevelTypeOption(type.Name, type.Id.IntegerValue));
+                long typeIdValue = ElementIdHelper.GetIdValue(type.Id);
+                _levelTypes.Add(new LevelTypeOption(type.Name, typeIdValue));
             }
 
             _levelTypes.Sort((left, right) => string.Compare(left.Name, right.Name, StringComparison.OrdinalIgnoreCase));

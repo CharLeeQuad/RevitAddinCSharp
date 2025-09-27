@@ -3,9 +3,9 @@ namespace RevitAddinCSharp.UI
     public class LevelTypeOption
     {
         public string Name { get; }
-        public int Id { get; }
+        public long Id { get; }
 
-        public LevelTypeOption(string name, int id)
+        public LevelTypeOption(string name, long id)
         {
             Name = name;
             Id = id;

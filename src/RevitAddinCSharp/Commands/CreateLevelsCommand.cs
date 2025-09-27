@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
@@ -6,6 +7,7 @@ using Autodesk.Revit.UI;
 using System.Windows.Interop;
 using RevitAddinCSharp.Settings;
 using RevitAddinCSharp.UI;
+using RevitAddinCSharp.Utils;
 
 namespace RevitAddinCSharp.Commands
 {
@@ -48,31 +50,17 @@ namespace RevitAddinCSharp.Commands
                 return Result.Cancelled;
             }
 
-            int aboveCount = window.AboveCount;
-            double aboveHeightMm = window.AboveHeightMm;
-            int belowCount = window.BelowCount;
-            double belowHeightMm = window.BelowHeightMm;
-
-            if (aboveCount == 0 && belowCount == 0)
+            IList<PlannedLevelItem> plannedLevels = window.ResultLevels;
+            if (plannedLevels == null || plannedLevels.Count == 0)
             {
-                TaskDialog.Show("Ebenen anlegen", "Keine Geschosse ausgewählt.");
+                TaskDialog.Show("Ebenen planen", "Der Plan enthält keine Ebenen.");
                 return Result.Cancelled;
             }
 
-            if (aboveHeightMm <= 0 || belowHeightMm <= 0)
-            {
-                message = "Die Geschosshöhe muss größer als 0 sein.";
-                return Result.Failed;
-            }
-
 #if REVIT2021_OR_OLDER
-            double aboveHeightFt = UnitUtils.ConvertToInternalUnits(aboveHeightMm, DisplayUnitType.DUT_MILLIMETERS);
-            double belowHeightFt = UnitUtils.ConvertToInternalUnits(belowHeightMm, DisplayUnitType.DUT_MILLIMETERS);
             double computationHeightFt = UnitUtils.ConvertToInternalUnits(settings.DefaultComputationHeightMm, DisplayUnitType.DUT_MILLIMETERS);
 #else
             ForgeTypeId millimeterId = UnitTypeId.Millimeters;
-            double aboveHeightFt = UnitUtils.ConvertToInternalUnits(aboveHeightMm, millimeterId);
-            double belowHeightFt = UnitUtils.ConvertToInternalUnits(belowHeightMm, millimeterId);
             double computationHeightFt = UnitUtils.ConvertToInternalUnits(settings.DefaultComputationHeightMm, millimeterId);
 #endif
 
@@ -82,8 +70,11 @@ namespace RevitAddinCSharp.Commands
             {
                 tx.Start();
 
-                CreateLevels(doc, aboveCount, aboveHeightFt, true, computationHeightFt, settings.AlwaysMarkAsBuildingStory, levelTypeId);
-                CreateLevels(doc, belowCount, belowHeightFt, false, computationHeightFt, settings.AlwaysMarkAsBuildingStory, levelTypeId);
+                CreatePlannedLevels(doc, plannedLevels, computationHeightFt, settings, levelTypeId
+#if !REVIT2021_OR_OLDER
+                    , millimeterId
+#endif
+                    );
 
                 tx.Commit();
             }
@@ -92,32 +83,36 @@ namespace RevitAddinCSharp.Commands
             return Result.Succeeded;
         }
 
-        private static void CreateLevels(Document doc, int count, double heightStep, bool positive, double computationHeightFt, bool markAsBuildingStory, ElementId levelTypeId)
+        private static void CreatePlannedLevels(
+            Document doc,
+            IList<PlannedLevelItem> plannedLevels,
+            double computationHeightFt,
+            LevelCreationSettings settings,
+            ElementId levelTypeId
+#if !REVIT2021_OR_OLDER
+            , ForgeTypeId millimeterId
+#endif
+            )
         {
-            if (count <= 0)
+            if (doc == null || plannedLevels == null || plannedLevels.Count == 0)
             {
                 return;
             }
 
-            if (positive)
+            foreach (PlannedLevelItem item in plannedLevels.OrderBy(level => level.Order))
             {
-                for (int index = 0; index < count; index++)
-                {
-                    double elevation = index * heightStep;
-                    Level level = EnsureLevel(doc, elevation, out bool created);
-                    ApplyLevelType(level, levelTypeId, created);
-                    ApplyDefaultParameters(level, computationHeightFt, markAsBuildingStory);
-                }
+                double elevationMm = item.ElevationMm;
+#if REVIT2021_OR_OLDER
+                double elevationFt = UnitUtils.ConvertToInternalUnits(elevationMm, DisplayUnitType.DUT_MILLIMETERS);
+#else
+                double elevationFt = UnitUtils.ConvertToInternalUnits(elevationMm, millimeterId);
+#endif
 
-                return;
-            }
-
-            for (int index = 1; index <= count; index++)
-            {
-                double elevation = positive ? index * heightStep : -index * heightStep;
-                Level level = EnsureLevel(doc, elevation, out bool created);
+                Level level = EnsureLevel(doc, elevationFt, out bool created);
                 ApplyLevelType(level, levelTypeId, created);
+                bool markAsBuildingStory = item.Category == LevelCategory.Building && item.IsBuildingStory;
                 ApplyDefaultParameters(level, computationHeightFt, markAsBuildingStory);
+                ApplyLevelName(level, settings, created, item.Name);
             }
         }
 
@@ -173,14 +168,41 @@ namespace RevitAddinCSharp.Commands
                 return;
             }
 
-            if (!created && level.GetTypeId().IntegerValue == desiredTypeId.IntegerValue)
+            ElementId currentTypeId = level.GetTypeId();
+
+            if (!created && currentTypeId == desiredTypeId)
             {
                 return;
             }
 
-            if (created || level.GetTypeId().IntegerValue != desiredTypeId.IntegerValue)
+            if (created || currentTypeId != desiredTypeId)
             {
                 level.ChangeTypeId(desiredTypeId);
+            }
+        }
+
+        private static void ApplyLevelName(Level level, LevelCreationSettings settings, bool created, string desiredName)
+        {
+            if (level == null || settings == null)
+            {
+                return;
+            }
+
+            bool shouldRename = created || settings.RenameExistingLevels;
+            if (!shouldRename)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(desiredName))
+            {
+                return;
+            }
+
+            string trimmed = desiredName.Trim();
+            if (!string.Equals(level.Name, trimmed, StringComparison.Ordinal))
+            {
+                level.Name = trimmed;
             }
         }
 
@@ -195,7 +217,7 @@ namespace RevitAddinCSharp.Commands
             {
                 if (settings.PreferredLevelTypeId != 0)
                 {
-                    ElementId storedId = new ElementId(settings.PreferredLevelTypeId);
+                    ElementId storedId = ElementIdHelper.Create(settings.PreferredLevelTypeId);
                     Element element = doc.GetElement(storedId);
                     if (element is LevelType)
                     {
@@ -229,7 +251,7 @@ namespace RevitAddinCSharp.Commands
                 .FirstOrDefault();
 
             return firstType?.Id ?? ElementId.InvalidElementId;
-        }
+     }
     }
 
 }

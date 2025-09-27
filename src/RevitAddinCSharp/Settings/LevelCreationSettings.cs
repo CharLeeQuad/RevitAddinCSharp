@@ -26,7 +26,14 @@ namespace RevitAddinCSharp.Settings
         public int DefaultBelowCount { get; set; }
         public double DefaultBelowHeightMm { get; set; }
         public string PreferredLevelTypeName { get; set; }
-        public int PreferredLevelTypeId { get; set; }
+        public long PreferredLevelTypeId { get; set; }
+        public bool RenameExistingLevels { get; set; }
+        public int LevelNumberDigits { get; set; }
+        public string LevelNameSuffix { get; set; }
+        public string GroundFloorToken { get; set; }
+        public string UpperFloorToken { get; set; }
+        public string TopFloorToken { get; set; }
+        public string BasementFloorToken { get; set; }
 
         public static LevelCreationSettings CreateDefault()
         {
@@ -39,7 +46,14 @@ namespace RevitAddinCSharp.Settings
                 DefaultBelowCount = 0,
                 DefaultBelowHeightMm = 3000.0,
                 PreferredLevelTypeName = string.Empty,
-                PreferredLevelTypeId = 0
+                PreferredLevelTypeId = 0,
+                RenameExistingLevels = true,
+                LevelNumberDigits = 2,
+                LevelNameSuffix = "_OKRF",
+                GroundFloorToken = "EG",
+                UpperFloorToken = "OG",
+                TopFloorToken = "DG",
+                BasementFloorToken = "UG"
             };
         }
 
@@ -54,7 +68,14 @@ namespace RevitAddinCSharp.Settings
                 DefaultBelowCount = DefaultBelowCount,
                 DefaultBelowHeightMm = DefaultBelowHeightMm,
                 PreferredLevelTypeName = PreferredLevelTypeName,
-                PreferredLevelTypeId = PreferredLevelTypeId
+                PreferredLevelTypeId = PreferredLevelTypeId,
+                RenameExistingLevels = RenameExistingLevels,
+                LevelNumberDigits = LevelNumberDigits,
+                LevelNameSuffix = LevelNameSuffix,
+                GroundFloorToken = GroundFloorToken,
+                UpperFloorToken = UpperFloorToken,
+                TopFloorToken = TopFloorToken,
+                BasementFloorToken = BasementFloorToken
             };
         }
 
@@ -73,6 +94,13 @@ namespace RevitAddinCSharp.Settings
             DefaultBelowHeightMm = source.DefaultBelowHeightMm;
             PreferredLevelTypeName = source.PreferredLevelTypeName;
             PreferredLevelTypeId = source.PreferredLevelTypeId;
+            RenameExistingLevels = source.RenameExistingLevels;
+            LevelNumberDigits = source.LevelNumberDigits;
+            LevelNameSuffix = source.LevelNameSuffix;
+            GroundFloorToken = source.GroundFloorToken;
+            UpperFloorToken = source.UpperFloorToken;
+            TopFloorToken = source.TopFloorToken;
+            BasementFloorToken = source.BasementFloorToken;
 
             SaveCurrent();
         }

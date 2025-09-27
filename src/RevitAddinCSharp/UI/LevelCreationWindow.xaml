@@ -1,48 +1,161 @@
 <Window x:Class="RevitAddinCSharp.UI.LevelCreationWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Geschosse anlegen"
-        Height="320"
-        Width="520"
-        MinHeight="300"
-        MinWidth="480"
+        Title="Geschosse planen"
+        Height="560"
+        Width="860"
+        MinHeight="520"
+        MinWidth="760"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
         WindowStyle="SingleBorderWindow">
     <Grid Margin="20">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="3*" />
-            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <TextBlock Grid.Row="0" Grid.Column="0" Text="Anzahl Obergeschosse:" VerticalAlignment="Center" Margin="0 0 12 16" />
-        <TextBox x:Name="AboveCountInput" Grid.Row="0" Grid.Column="1" Text="5" VerticalContentAlignment="Center" Margin="0 0 0 16" Height="28" />
+        <Border Grid.Row="0"
+                Grid.Column="0"
+                Margin="0 0 16 0"
+                Background="#F5F5F5"
+                BorderBrush="#DDDDDD"
+                BorderThickness="1"
+                CornerRadius="4">
+            <StackPanel Margin="12">
+                <TextBlock Text="Bereiche"
+                           FontWeight="Bold"
+                           Margin="0 0 0 12" />
 
-        <TextBlock Grid.Row="1" Grid.Column="0" Text="Geschosshöhe Obergeschosse [mm]:" VerticalAlignment="Center" Margin="0 0 12 16" />
-        <TextBox x:Name="AboveHeightInput" Grid.Row="1" Grid.Column="1" Text="3000" VerticalContentAlignment="Center" Margin="0 0 0 16" Height="28" />
+                <StackPanel Margin="0 0 0 20">
+                    <Button Content="Gebäudegeschoss hinzufügen"
+                            Margin="0 0 0 8"
+                            Padding="10 6"
+                            Click="OnAddBuildingLevelClick" />
+                    <Button Content="Oberkante hinzufügen"
+                            Margin="0 0 0 8"
+                            Padding="10 6"
+                            Click="OnAddTopEdgeClick" />
+                    <Button Content="Unterkante hinzufügen"
+                            Margin="0 0 0 8"
+                            Padding="10 6"
+                            Click="OnAddBottomEdgeClick" />
+                    <Button Content="Hilfsebene hinzufügen"
+                            Margin="0 0 0 8"
+                            Padding="10 6"
+                            Click="OnAddHelperLevelClick" />
+                </StackPanel>
 
-        <TextBlock Grid.Row="2" Grid.Column="0" Text="Anzahl Untergeschosse:" VerticalAlignment="Center" Margin="0 0 12 16" />
-        <TextBox x:Name="BelowCountInput" Grid.Row="2" Grid.Column="1" Text="0" VerticalContentAlignment="Center" Margin="0 0 0 16" Height="28" />
+                <Separator Margin="0 0 0 12" />
 
-        <TextBlock Grid.Row="3" Grid.Column="0" Text="Geschosshöhe Untergeschosse [mm]:" VerticalAlignment="Center" Margin="0 0 12 16" />
-        <TextBox x:Name="BelowHeightInput" Grid.Row="3" Grid.Column="1" Text="3000" VerticalContentAlignment="Center" Margin="0 0 0 16" Height="28" />
+                <TextBlock Text="Aktionen"
+                           FontWeight="Bold"
+                           Margin="0 0 0 8" />
+                <Button Content="Plan zurücksetzen"
+                        Padding="10 6"
+                        Click="OnResetPlanClick" />
+            </StackPanel>
+        </Border>
 
-        <TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" TextWrapping="Wrap" Foreground="#555" Margin="0 0 0 16">
-            Werte in Millimetern eingeben. Das Erdgeschoss (0 mm) wird automatisch erzeugt.
-        </TextBlock>
+        <Grid Grid.Row="0" Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="Abbrechen" Width="110" Margin="0 0 12 0" Padding="12 6" Click="OnCancelClick" />
-            <Button Content="OK" Width="110" Padding="12 6" Click="OnOkClick" />
+            <TextBlock Text="Geplante Ebenen"
+                       FontWeight="Bold"
+                       FontSize="16"
+                       Margin="0 0 0 12" />
+
+            <ListView x:Name="PlannedLevelsList"
+                      Grid.Row="1"
+                      ItemsSource="{Binding PlannedLevels}"
+                      SelectionMode="Single"
+                      AlternationCount="1000">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="#" Width="40">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Order}" HorizontalAlignment="Center" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Bezeichnung" Width="190">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Kategorie" Width="120">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding CategoryLabel}" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Höhe [mm]" Width="120">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding ElevationText, UpdateSourceTrigger=PropertyChanged}" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Kürzel" Width="80">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding ShortLabel, UpdateSourceTrigger=PropertyChanged}" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Gebäudegeschoss" Width="120">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding IsBuildingStory, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Aktionen" Width="140">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <Button Content="↑" Width="28" Margin="0 0 4 0" Tag="{Binding}" Click="OnMoveUpClick" />
+                                        <Button Content="↓" Width="28" Margin="0 0 4 0" Tag="{Binding}" Click="OnMoveDownClick" />
+                                        <Button Content="✕" Width="28" Tag="{Binding}" Click="OnDeleteClick" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </Grid>
+
+        <StackPanel Grid.Row="1"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right">
+            <Button Content="Abbrechen"
+                    Width="110"
+                    Margin="0 0 12 0"
+                    Padding="12 6"
+                    Click="OnCancelClick" />
+            <Button Content="OK"
+                    Width="110"
+                    Padding="12 6"
+                    Click="OnOkClick" />
         </StackPanel>
     </Grid>
 </Window>
